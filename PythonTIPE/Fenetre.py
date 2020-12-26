@@ -14,7 +14,7 @@ class Fenetre(tk.Tk):
         #taille d'affichage d'un carreau de la grille forêt.
         self.a = 10
         #Code couleur pour faire correspondre la simulation à l'affichage.
-        self.colorCode={0:'green',1:'red',2:'white',3:'black'}
+        self.colorCode={0:'forest green',1:'red',2:'ivory',3:'dim gray'}
         self.creerWidgets()
     
     def creerWidgets(self):
