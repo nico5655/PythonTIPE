@@ -11,10 +11,11 @@ class Foret(object):
         self.nL=nL
         #probabilités de base.
         self.pNonArbre = 0.25
-        self.p = 0.1
-        self.pConsume = 0.04
+        self.p = 1
+        self.pConsume = 0.033
         #initialisation
         self.grille = self.initialiserForet()
+        self.vitesse = self.calculerEffetVent(1,np.pi/4)
 
     def initialiserForet(self):
         """Initialisation de la forêt."""
@@ -27,26 +28,10 @@ class Foret(object):
                 if random.random() < self.pNonArbre or i == self.nL-1 or i ==0 or j == self.nC-1 or j==0:
                     etat[i,j]=2
         # choix du départ du feu
-        i = random.randint(0,self.nL-1)
-        j = random.randint(0,self.nC-1)
-        etat[i,j] = 1
+        #i = random.randint(0,self.nL-1)
+        #j = random.randint(0,self.nC-1)
+        etat[self.nL//2,self.nC//2] = 1
         return etat
-
-
-    def r(self,un):
-        return 5
-
-    def prob(self,x,y,grille1):
-        """Calcul de la probabilité d'une case de s'enflammer. Fonction liée au modèle physique."""
-        k=1.2
-        un=1
-        if grille1[(x-1)%self.nL, y] == 1:
-            return self.p*k*self.r(un)
-        if grille1[x,(y+1)%self.nC] == 1:
-            return self.p*k*self.r(un)*self.nC/self.nL
-        if grille1[(x+1)%self.nL,y] == 1 or grille1[x,(y-1)%self.nC] == 1:
-            return self.p
-        return 0
 
     def evolutionFeu(self):
         """Evolution du feu"""
@@ -65,4 +50,46 @@ class Foret(object):
                      if random.random() < p1:
                          self.grille[x,y] = 1
 
-    
+### modèle physique
+    def prob(self,x,y,grille1):
+        """Calcul de la probabilité d'une case de s'enflammer. Fonction faisant le lien avec le modèle physique."""
+        omega=0
+        if grille1[(x-1)%self.nL, y] == 1:#left-to-right
+            omega += self.vitesse[2,1]
+        if grille1[(x+1)%self.nL,y] == 1:#right-to-left
+            omega += self.vitesse[0,1]
+        if grille1[x,(y+1)%self.nC] == 1:#up-to-down
+            omega += self.vitesse[1,2]
+        if grille1[x,(y-1)%self.nC] == 1:#down-to-up
+            omega += self.vitesse[1,0]
+        omega = omega / np.sum(self.vitesse)
+        return self.prob0(x,y)*omega
+
+    def prob0(self,x,y):
+        return self.p
+
+    def calculerEffetVent(self,un,alpha):
+        """Calcule l'effet du vent."""
+        k=1
+        vitesse_base=np.array([
+            [0,1,0],
+            [1,1,1],
+            [0,1,0]
+            ])
+        vitesse_vent=np.zeros((3,3))
+        upd=np.sin(alpha)
+        if alpha >= 0:
+            vitesse_vent[1,2]=np.abs(upd)
+        else:
+            vitesse_vent[1,0]=np.abs(upd)
+        rd=np.cos(alpha)
+        if (-np.pi/2) <= (alpha % (2*np.pi)) <= (np.pi/2):
+            vitesse_vent[2,1]=np.abs(rd)
+        else:
+            vitesse_vent[0,1]=np.abs(rd)
+        vitesse_vent = (k*self.r(un))*vitesse_vent
+        return np.maximum(vitesse_base,vitesse_vent)
+
+    def r(self,un):
+        """Fonction clé du modèle physique, renvoit le rapport entre la vitesse sans vent, et la vitesse avec le vent donné."""
+        return 8
