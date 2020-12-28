@@ -28,6 +28,9 @@
     <Compile Include="Foret.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="gros.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PythonTIPE.py" />
   </ItemGroup>
   <ItemGroup>
