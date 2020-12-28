@@ -109,7 +109,10 @@ class Fenetre(tk.Tk):
         self.a = 10
         #Code couleur pour faire correspondre la simulation à l'affichage.
         self.colorCode={0:'forest green',1:'red',2:'ivory',3:'dim gray'}
+        #initialisation
         self.creerWidgets()
+        self.playing=False
+        self.suivant()
     
     def creerWidgets(self):
         """Création et disposition des widgets."""
@@ -118,7 +121,7 @@ class Fenetre(tk.Tk):
         self.canvas = tk.Canvas(self, width=15*self.a*self.foret.nC+1, height=self.a*self.foret.nL+1, highlightthickness=2)
         self.creerGrille()
         #le bouton pour allumer le feu
-        self.bou1 = tk.Button(self,text='Propagation', width=8, command=self.suivant)
+        self.bou1 = tk.Button(self,text='pause/reprendre', width=15, command=self.play)
         self.bou1.pack(side='top')
         self.canvas.pack(fill='both')
 
@@ -144,14 +147,17 @@ class Fenetre(tk.Tk):
                 #les rectangles sont affichés puis stockés avec leur couleur dans la grille d'affichage.
                 self.rectGrid[x][y]=(recta,coul)
 
+    def play(self):
+        self.playing= (not self.playing)
+
     def suivant(self):
         """Fonction appelée régulièrement pour faire avancer la simulation."""
-
-        #évolution de la forêt.
-        self.foret.evolutionFeu()
-        #affichage des modifications de la forêt sur la grille.
-        self.modifierGrille()
-        #itération suivante.
+        if self.playing:
+            #évolution de la forêt.
+            self.foret.evolutionFeu()
+            #affichage des modifications de la forêt sur la grille.
+            self.modifierGrille()
+            #itération suivante.
         self.after(50,self.suivant)
 
 fenetre=Fenetre()
