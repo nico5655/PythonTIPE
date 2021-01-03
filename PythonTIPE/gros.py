@@ -96,6 +96,11 @@ class Foret(object):
         """Fonction clé du modèle physique, renvoit le rapport entre la vitesse sans vent, et la vitesse avec le vent donné."""
         return 8
 
+import tkinter as tk
+from Foret import Foret
+import numpy as np
+import time
+
 class Fenetre(tk.Tk):
     """La fenêtre qui affichera la forêt simulée."""
 
@@ -121,8 +126,17 @@ class Fenetre(tk.Tk):
         self.canvas = tk.Canvas(self, width=15*self.a*self.foret.nC+1, height=self.a*self.foret.nL+1, highlightthickness=2)
         self.creerGrille()
         #le bouton pour allumer le feu
-        self.bou1 = tk.Button(self,text='pause/reprendre', width=15, command=self.play)
-        self.bou1.pack(side='top')
+        fra=tk.Frame(self)
+        self.bouText=tk.StringVar()
+        self.bouText.set("Commencer")
+        self.bou1 = tk.Button(fra,textvariable=self.bouText, width=15, command=self.play)
+        self.bou1.pack(side='left')
+        la=tk.Label(fra,text="Angle du vent")
+        la.pack(side='right')
+        self.scala2 = tk.Scale(fra, from_=0, to=360, orient=tk.HORIZONTAL)
+        self.scala2.set(45)
+        self.scala2.pack(side='right')
+        fra.pack()
         self.canvas.pack(fill='both')
 
     def modifierGrille(self):
@@ -148,7 +162,14 @@ class Fenetre(tk.Tk):
                 self.rectGrid[x][y]=(recta,coul)
 
     def play(self):
-        self.playing= (not self.playing)
+        self.playing = (not self.playing)
+        if self.playing:
+            self.scala2.config(state='disabled')
+            self.bouText.set("Pause")
+        else:
+            self.scala2.config(state='normal')
+            self.bouText.set("Reprendre")
+        self.foret.vitesse=self.foret.calculerEffetVent(1,np.pi/180 * self.scala2.get())
 
     def suivant(self):
         """Fonction appelée régulièrement pour faire avancer la simulation."""
@@ -159,6 +180,7 @@ class Fenetre(tk.Tk):
             self.modifierGrille()
             #itération suivante.
         self.after(50,self.suivant)
+
 
 fenetre=Fenetre()
 #on agrandit la fenêtre.

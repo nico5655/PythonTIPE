@@ -11,7 +11,7 @@ class Foret(object):
         self.nL=nL
         #probabilités de base.
         self.pNonArbre = 0.25
-        self.p = 1
+        self.p = 1.0
         self.pConsume = 0.033
         #initialisation
         self.grille = self.initialiserForet()
@@ -70,7 +70,7 @@ class Foret(object):
 
     def calculerEffetVent(self,un,alpha):
         """Calcule l'effet du vent."""
-        k=1
+        k=1.0
         vitesse_base=np.array([
             [0,1,0],
             [1,1,1],
@@ -91,5 +91,5 @@ class Foret(object):
         return np.maximum(vitesse_base,vitesse_vent)
 
     def r(self,un):
-        """Fonction clé du modèle physique, renvoit le rapport entre la vitesse sans vent, et la vitesse avec le vent donné."""
+        """Fonction clé du modèle physique, renvoie le rapport entre la vitesse sans vent, et la vitesse avec le vent donné."""
         return 8
