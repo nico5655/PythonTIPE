@@ -66,11 +66,10 @@ class Foret(object):
         return self.prob0(x,y)*omega
 
     def prob0(self,x,y):
-        return self.p
+        return self.p # à revoir, la densité de la végétation devrait être directement utilisée pour le calcul de r, donc de p principal.
 
     def calculerEffetVent(self,un,alpha):
         """Calcule l'effet du vent."""
-        k=1.0
         vitesse_base=np.array([
             [0,1,0],
             [1,1,1],
@@ -87,9 +86,9 @@ class Foret(object):
             vitesse_vent[2,1]=np.abs(rd)
         else:
             vitesse_vent[0,1]=np.abs(rd)
-        vitesse_vent = (k*self.r(un))*vitesse_vent
-        return np.maximum(vitesse_base,vitesse_vent)
+        vitesse_vent = (self.r(un))*vitesse_vent
+        return vitesse_base+vitesse_vent
 
     def r(self,un):
         """Fonction clé du modèle physique, renvoie le rapport entre la vitesse sans vent, et la vitesse avec le vent donné."""
-        return 8
+        return 10
