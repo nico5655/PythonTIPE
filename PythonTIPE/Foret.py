@@ -54,14 +54,10 @@ class Foret(object):
     def prob(self,x,y,grille1):
         """Calcul de la probabilité d'une case de s'enflammer. Fonction faisant le lien avec le modèle physique."""
         omega=0
-        if grille1[(x-1)%self.nL, y] == 1:#left-to-right
-            omega += self.vitesse[2,1]
-        if grille1[(x+1)%self.nL,y] == 1:#right-to-left
-            omega += self.vitesse[0,1]
-        if grille1[x,(y+1)%self.nC] == 1:#up-to-down
-            omega += self.vitesse[1,2]
-        if grille1[x,(y-1)%self.nC] == 1:#down-to-up
-            omega += self.vitesse[1,0]
+        for i in range(8):
+            beta=i*np.pi/4
+            if grille1[x-Foret.sgn(np.cos(beta)),y+Foret.sgn(np.sin(beta))]==1:
+                omega+=self.vitesse[1+Foret.sgn(np.cos(beta)),1+Foret.sgn(np.sin(beta))]
         omega = omega / np.sum(self.vitesse)
         return self.prob0(x,y)*omega
 
@@ -71,24 +67,25 @@ class Foret(object):
     def calculerEffetVent(self,un,alpha):
         """Calcule l'effet du vent."""
         vitesse_base=np.array([
-            [0,1,0],
             [1,1,1],
-            [0,1,0]
+            [1,1,1],
+            [0,1,1]
             ])
         vitesse_vent=np.zeros((3,3))
-        upd=np.sin(alpha)
-        if alpha >= 0:
-            vitesse_vent[1,2]=np.abs(upd)
-        else:
-            vitesse_vent[1,0]=np.abs(upd)
-        rd=np.cos(alpha)
-        if (-np.pi/2) <= (alpha % (2*np.pi)) <= (np.pi/2):
-            vitesse_vent[2,1]=np.abs(rd)
-        else:
-            vitesse_vent[0,1]=np.abs(rd)
+        for i in range(8):
+            beta=i*np.pi/4
+            value=np.cos(beta-alpha)
+            if value > 1e-10:
+                vitesse_vent[1+Foret.sgn(np.cos(beta)),1+Foret.sgn(np.sin(beta))]=value
         vitesse_vent = (self.r(un))*vitesse_vent
+        print(vitesse_vent.T)
         return vitesse_base+vitesse_vent
+
+    def sgn(x):
+        if abs(x) <= 1e-10:
+            return 0
+        return int(x/abs(x))
 
     def r(self,un):
         """Fonction clé du modèle physique, renvoie le rapport entre la vitesse sans vent, et la vitesse avec le vent donné."""
-        return 10
+        return 5
