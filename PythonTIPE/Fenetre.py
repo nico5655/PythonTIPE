@@ -9,13 +9,13 @@ class Fenetre(tk.Tk):
     def __init__(self):
         super().__init__()
         #la forêt qui sera simulée.
-        self.foret=Foret(75,150)
+        self.foret=Foret(150,300)
         #Grille d'affichage correspondant à la grille forêt.
         self.rectGrid=[[(None,None) for i in range(self.foret.nC)] for j in range(self.foret.nL)]
         #taille d'affichage d'un carreau de la grille forêt.
         self.a = 10
         #Code couleur pour faire correspondre la simulation à l'affichage.
-        self.colorCode={0:'forest green',1:'red',2:'ivory',3:'dim gray'}
+        self.colorCode={0:'forest green',1:'red',2:'ivory',3:'black'}
         #initialisation
         self.creerWidgets()
         self.playing=False
@@ -72,14 +72,19 @@ class Fenetre(tk.Tk):
             self.scala2.config(state='normal')
             self.bouText.set("Reprendre")
         self.foret.vitesse=self.foret.calculerEffetVent(1,np.pi/180 * self.scala2.get())
+        self.foret.mesh_v=self.foret.mesher_vitesse()
 
     def suivant(self):
         """Fonction appelée régulièrement pour faire avancer la simulation."""
         if self.playing:
             #évolution de la forêt.
+            t=time.time()
             self.foret.evolutionFeu()
+            print('calc',time.time()-t)
+            t=time.time()
             #affichage des modifications de la forêt sur la grille.
-            self.modifierGrille()
+            self.modifierGrille()# a optimiser?
+            print("aff",time.time()-t)
             #itération suivante.
-        self.after(50,self.suivant)
+        self.after(100,self.suivant)
 
