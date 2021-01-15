@@ -1,5 +1,6 @@
 import tkinter as tk
 from Foret import Foret
+import numpy as np
 import time
 
 class Fenetre(tk.Tk):
@@ -14,8 +15,12 @@ class Fenetre(tk.Tk):
         #taille d'affichage d'un carreau de la grille forêt.
         self.a = 10
         #Code couleur pour faire correspondre la simulation à l'affichage.
-        self.colorCode={0:'forest green',1:'red',2:'ivory',3:'dim gray'}
+        self.colorCode={0:'forest green',1:'red',2:'ivory',3:'gray29'}
+        #initialisation
         self.creerWidgets()
+        self.playing=False
+        self.skip=False
+        self.suivant()
     
     def creerWidgets(self):
         """Création et disposition des widgets."""
@@ -23,9 +28,21 @@ class Fenetre(tk.Tk):
         #le canvas pour afficher la grille sur l'écran.
         self.canvas = tk.Canvas(self, width=15*self.a*self.foret.nC+1, height=self.a*self.foret.nL+1, highlightthickness=2)
         self.creerGrille()
+
         #le bouton pour allumer le feu
-        self.bou1 = tk.Button(self,text='Propagation', width=8, command=self.suivant)
-        self.bou1.pack(side='top')
+        fra=tk.Frame(self)
+        self.bouText=tk.StringVar()
+        #le texte du bouton est dynamique, il change selon si l'on est au début, en pause ou en cours de propagation.
+        self.bouText.set("Commencer")
+        self.bou1 = tk.Button(fra,textvariable=self.bouText, width=15, command=self.play)
+        self.bou1.pack(side='left')
+        #le slider qui permet de modifier l'angle du vent
+        la=tk.Label(fra,text="Angle du vent")
+        la.pack(side='right')
+        self.scala2 = tk.Scale(fra, from_=0, to=360, orient=tk.HORIZONTAL)
+        self.scala2.set(45)
+        self.scala2.pack(side='right')
+        fra.pack()
         self.canvas.pack(fill='both')
 
     def modifierGrille(self):
@@ -40,6 +57,8 @@ class Fenetre(tk.Tk):
                     self.canvas.itemconfig(recta, fill=coul)
                     #modification du rectangle et de la couleur stockés dans la grille d'affichage.
                     self.rectGrid[x][y]=(recta,coul)
+        #l'affichage est directement mis à jour (les couleurs changent sur l'écran)
+        self.canvas.update()
 
     def creerGrille(self):
         """Création et initialisation des carreaux qui constituent la grille de la fenêtre."""
@@ -50,13 +69,33 @@ class Fenetre(tk.Tk):
                 #les rectangles sont affichés puis stockés avec leur couleur dans la grille d'affichage.
                 self.rectGrid[x][y]=(recta,coul)
 
+    def play(self):
+        self.playing = (not self.playing)
+        if self.playing:
+            self.scala2.config(state='disabled')
+            self.bouText.set("Pause")
+        else:
+            self.scala2.config(state='normal')
+            self.bouText.set("Reprendre")
+        if self.playing:
+            #après avoir repris on enregistre les éventuelles modifications de l'angle du vent.
+            self.foret.mesher_vitesse(1,np.pi/180 * self.scala2.get())
+
     def suivant(self):
         """Fonction appelée régulièrement pour faire avancer la simulation."""
-
-        #évolution de la forêt.
-        self.foret.evolutionFeu()
-        #affichage des modifications de la forêt sur la grille.
-        self.modifierGrille()
-        #itération suivante.
-        self.after(50,self.suivant)
+        #itération suivante appelée au début pour être sûr que l'intervalle soit constant.
+        self.after(200,self.suivant)
+        #la forêt n'est pas modifiée si on est en pause.
+        if self.playing:
+            #évolution de la forêt.
+            self.foret.evolutionFeu()
+            #affichage des modifications de la forêt sur la grille.
+            if not self.skip:
+                #le skip est utilisé dans le cas où la modification de l'affichage prend plus de 200ms.
+                #éviter que l'itération suivante modifie l'affichage tant que cette itération n'a pas fini.
+                #les problèmes de performance ne ralentiront donc pas le feu.
+                #en revanche, en cas de problème de performance, l'affichage sera mis à jour à des intervalles plus espacés.
+                self.skip=True
+                self.modifierGrille()
+                self.skip=False
 
