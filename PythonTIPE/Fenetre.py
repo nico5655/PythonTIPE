@@ -9,16 +9,17 @@ class Fenetre(tk.Tk):
     def __init__(self):
         super().__init__()
         #la forêt qui sera simulée.
-        self.foret=Foret(150,300)
+        self.foret=Foret(75,150)
         #Grille d'affichage correspondant à la grille forêt.
         self.rectGrid=[[(None,None) for i in range(self.foret.nC)] for j in range(self.foret.nL)]
         #taille d'affichage d'un carreau de la grille forêt.
         self.a = 10
         #Code couleur pour faire correspondre la simulation à l'affichage.
-        self.colorCode={0:'forest green',1:'red',2:'ivory',3:'black'}
+        self.colorCode={0:'forest green',1:'red',2:'ivory',3:'gray29'}
         #initialisation
         self.creerWidgets()
         self.playing=False
+        self.skip=False
         self.suivant()
     
     def creerWidgets(self):
@@ -27,12 +28,15 @@ class Fenetre(tk.Tk):
         #le canvas pour afficher la grille sur l'écran.
         self.canvas = tk.Canvas(self, width=15*self.a*self.foret.nC+1, height=self.a*self.foret.nL+1, highlightthickness=2)
         self.creerGrille()
+
         #le bouton pour allumer le feu
         fra=tk.Frame(self)
         self.bouText=tk.StringVar()
+        #le texte du bouton est dynamique, il change selon si l'on est au début, en pause ou en cours de propagation.
         self.bouText.set("Commencer")
         self.bou1 = tk.Button(fra,textvariable=self.bouText, width=15, command=self.play)
         self.bou1.pack(side='left')
+        #le slider qui permet de modifier l'angle du vent
         la=tk.Label(fra,text="Angle du vent")
         la.pack(side='right')
         self.scala2 = tk.Scale(fra, from_=0, to=360, orient=tk.HORIZONTAL)
@@ -53,6 +57,8 @@ class Fenetre(tk.Tk):
                     self.canvas.itemconfig(recta, fill=coul)
                     #modification du rectangle et de la couleur stockés dans la grille d'affichage.
                     self.rectGrid[x][y]=(recta,coul)
+        #l'affichage est directement mis à jour (les couleurs changent sur l'écran)
+        self.canvas.update()
 
     def creerGrille(self):
         """Création et initialisation des carreaux qui constituent la grille de la fenêtre."""
@@ -71,20 +77,25 @@ class Fenetre(tk.Tk):
         else:
             self.scala2.config(state='normal')
             self.bouText.set("Reprendre")
-        self.foret.vitesse=self.foret.calculerEffetVent(1,np.pi/180 * self.scala2.get())
-        self.foret.mesh_v=self.foret.mesher_vitesse()
+        if self.playing:
+            #après avoir repris on enregistre les éventuelles modifications de l'angle du vent.
+            self.foret.mesher_vitesse(1,np.pi/180 * self.scala2.get())
 
     def suivant(self):
         """Fonction appelée régulièrement pour faire avancer la simulation."""
+        #itération suivante appelée au début pour être sûr que l'intervalle soit constant.
+        self.after(200,self.suivant)
+        #la forêt n'est pas modifiée si on est en pause.
         if self.playing:
             #évolution de la forêt.
-            t=time.time()
             self.foret.evolutionFeu()
-            print('calc',time.time()-t)
-            t=time.time()
             #affichage des modifications de la forêt sur la grille.
-            self.modifierGrille()# a optimiser?
-            print("aff",time.time()-t)
-            #itération suivante.
-        self.after(100,self.suivant)
+            if not self.skip:
+                #le skip est utilisé dans le cas où la modification de l'affichage prend plus de 200ms.
+                #éviter que l'itération suivante modifie l'affichage tant que cette itération n'a pas fini.
+                #les problèmes de performance ne ralentiront donc pas le feu.
+                #en revanche, en cas de problème de performance, l'affichage sera mis à jour à des intervalles plus espacés.
+                self.skip=True
+                self.modifierGrille()
+                self.skip=False
 
