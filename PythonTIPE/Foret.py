@@ -18,7 +18,7 @@ class Foret(object):
         self.pConsume = 0.02
         #initialisation
         self.grille = self.initialiserForet()
-        self.mesher_vitesse(1,np.pi / 4, 0.2)
+        self.mesher_vitesse(2,np.pi / 4, 0.2)
         
     def initialiserForet(self):
         """Initialisation de la forêt."""
