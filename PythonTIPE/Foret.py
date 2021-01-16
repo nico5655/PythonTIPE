@@ -19,7 +19,7 @@ class Foret(object):
         self.pConsume = 0.02
         #initialisation
         self.grille = self.initialiserForet()
-        self.mesher_vitesse(1,np.pi / 4)
+        self.mesher_vitesse(1,np.pi / 4, 0.2)
         
     def initialiserForet(self):
         """Initialisation de la forêt."""
@@ -88,28 +88,25 @@ class Foret(object):
 
 ### modèle physique
 
-    def mesher_vitesse(self,un,alpha):
-        self.vitesse=self.calculerEffetVent(un,alpha)
+    def mesher_vitesse(self,un,alpha,humidite):
+        mat_direction=self.calculerEffetDirectionVent(alpha)
         #à chaque point on associe sa matrice de vitesse 3x3.
         #temps de calcul peut-être long surtout une fois la densité de végétation prise en compte.
         #Mais il n'est effectué que quand que la vitesse du vent est changée.
         #voir pour plus d'opti quand la densité de végétation sera prise en compte.
         #par exemple calculer la matrice de direction du vent au début ce qui permettrait de ne recalculer que r pour chaque case.
         #sinon probablement utiliser numpy ici aussi pour améliorer les performances.
+        base = np.ones((3,3))
         arr=np.ones((self.nL,self.nC,3,3))
         for i in range(self.nL):
             for j in range(self.nC):
                 #pour l'instant, pas de densité de végétation donc la vitesse est pareille partout.
-                arr[i,j]=self.vitesse.copy()
+                arr[i,j]=self.r(un,humidite,1)*mat_direction.copy()+base
         self.mesh_v=arr
 
 
-    def calculerEffetVent(self,un,alpha):
+    def calculerEffetDirectionVent(self,alpha):
         """Calcule l'effet du vent."""
-        vitesse_base = np.array(
-            [[1,1,1],
-            [1,1,1],
-            [1,1,1]])
         vitesse_vent = np.zeros((3,3))
         for i in range(8):
             #on fait tourner un angle par les 8 directions.
@@ -125,10 +122,9 @@ class Foret(object):
                 #modification de la case correspondante dans la matrice du vent.
                 #par exemple (1,1)+(1,1)=(2,2) pour 45°.
                 vitesse_vent[1 + Foret.sgn(np.cos(beta)),1 + Foret.sgn(np.sin(beta))] = value
-        vitesse_vent = (self.r(un)) * vitesse_vent
-        print(np.flip((vitesse_base + vitesse_vent).T,0))
+        print(np.flip(vitesse_vent.T,0))
         #on utilise flip car l'axe des y de la grille est inversé.
-        return np.flip(vitesse_base + vitesse_vent,0)
+        return np.flip(vitesse_vent,0)
 
     def sgn(x):
         #1 si x>0, 0 si x=0, -1 si x<0.
@@ -137,6 +133,16 @@ class Foret(object):
             return 0
         return int(x / abs(x))
 
-    def r(self,un):
+    def r(self,un,humidite,d):
         """Fonction clé du modèle physique, renvoie le rapport entre la vitesse sans vent, et la vitesse avec le vent donné."""
+        A0=1
+        b0=1
+        a=1
+        rac=1+((b0*un-d)/((b0*un)**2 + d**2)**(1/2))
+        A=(A0/((1+a*humidite)**3))*rac
+        A13=A**(1/3)
+        B=A**2+9*A+3*((A+81/4)**(1/2)) + 27/2
+        num=B**(2/3) + A13*(A+6)
+        den=B**(1/3)
+        r=1+(A13/3)*((num/den)+A13**2)
         return 6 #valeur arbitraire pour l'instant.
