@@ -59,7 +59,7 @@ class Foret(object):
         #la multiplication termes à termes annulera les coefficients de vitesses pour les cases éteintes.
         allumage=(patches==1)*self.mesh_v[1:(self.nL-1),1:(self.nC-1)]
         #on somme ensuite les matrices de vitesse avant de les diviser par le total pour obtenir les probabilités.
-        allumage=allumage.sum(axis=(-1, -2))/np.sum(self.vitesse)
+        allumage=allumage.sum(axis=(-1, -2))/(self.mesh_v[1:(self.nL-1),1:(self.nC-1)]).sum(axis=(-1, -2))
         #on tire un tableau de nombre aléatoires (un nombre par case)
         rdms=np.random.rand(self.nL-2,self.nC-2)#tirage
         grille2=self.grille[1:(self.nL-1),1:(self.nC-1)]
