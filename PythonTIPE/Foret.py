@@ -12,7 +12,6 @@ class Foret(object):
         self.nL = nL
         #probabilités de base.
         self.pNonArbre = 0.25
-        self.p = 1.0
         #TODO: la probabilité de consommation devrait être revue pour avoir un lien avec la vitesse sans vent.
         #c'est le problème des échelles arbitraire de temps et de distance.
         #un feu très lent doit s'arrêter plus vite.
