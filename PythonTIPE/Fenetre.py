@@ -37,11 +37,24 @@ class Fenetre(tk.Tk):
         self.bou1 = tk.Button(fra,textvariable=self.bouText, width=15, command=self.play)
         self.bou1.pack(side='left')
         #le slider qui permet de modifier l'angle du vent
-        la=tk.Label(fra,text="Angle du vent")
+        la=tk.Label(fra,text="Angle du vent (°)")
         la.pack(side='right')
         self.scala2 = tk.Scale(fra, from_=0, to=360, orient=tk.HORIZONTAL)
         self.scala2.set(45)
         self.scala2.pack(side='right')
+        #slider pour l'humidité
+        la=tk.Label(fra,text="humidité (%)")
+        la.pack(side='right')
+        self.scala_humid = tk.Scale(fra, from_=1, to=50, orient=tk.HORIZONTAL)
+        self.scala_humid.set(20)
+        self.scala_humid.pack(side='right')
+        #slider pour la vitesse du vent
+        la=tk.Label(fra,text="vitesse du vent (m/s)")
+        la.pack(side='right')
+        self.scala_vitesse = tk.Scale(fra, from_=0, to=10, orient=tk.HORIZONTAL)
+        self.scala_vitesse.set(2)
+        self.scala_vitesse.pack(side='right')
+
         fra.pack()
         self.canvas.pack(fill='both')
 
@@ -72,14 +85,20 @@ class Fenetre(tk.Tk):
     def play(self):
         self.playing = (not self.playing)
         if self.playing:
+            #désactiver les curseurs pour ne pas les bouger pendant que la simulation est en cours.
             self.scala2.config(state='disabled')
+            self.scala_humid.config(state='disabled')
+            self.scala_vitesse.config(state='disabled')
             self.bouText.set("Pause")
         else:
+            #réactiver les curseurs pour autoriser une modification pendant la pause.
             self.scala2.config(state='normal')
+            self.scala_humid.config(state='normal')
+            self.scala_vitesse.config(state='normal')
             self.bouText.set("Reprendre")
         if self.playing:
             #après avoir repris on enregistre les éventuelles modifications de l'angle du vent.
-            self.foret.mesher_vitesse(1,np.pi/180 * self.scala2.get(),0.2)
+            self.foret.mesher_vitesse(self.scala_vitesse,np.pi/180 * self.scala2.get(),self.scala_humid/100)
 
     def suivant(self):
         """Fonction appelée régulièrement pour faire avancer la simulation."""
@@ -98,4 +117,3 @@ class Fenetre(tk.Tk):
                 self.skip=True
                 self.modifierGrille()
                 self.skip=False
-
