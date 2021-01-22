@@ -2,6 +2,9 @@ import numpy as np
 import random
 import time
 from numpy.lib import stride_tricks
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from mpl_toolkits.mplot3d import Axes3D
 
 class Foret(object):
     """La simulation de la forêt qui sera affichée."""
@@ -134,9 +137,9 @@ class Foret(object):
 
     def r(self,un,humidite,d):
         """Fonction clé du modèle physique, renvoie le rapport entre la vitesse sans vent, et la vitesse avec le vent donné."""
-        A0=1
-        b0=1
-        a=1
+        A0=5.73
+        b0=0.23
+        a=2.10
         rac=1+((b0*un-d)/((b0*un)**2 + d**2)**(1/2))
         A=(A0/((1+a*humidite)**3))*rac
         A13=A**(1/3)
@@ -144,4 +147,16 @@ class Foret(object):
         num=B**(2/3) + A13*(A+6)
         den=B**(1/3)
         r=1+(A13/3)*((num/den)+A13**2)
-        return 6 #valeur arbitraire pour l'instant.
+        return r
+
+humidite=np.linspace(0.05,0.35,100)
+un=np.linspace(1,10,100)
+humidite,un=np.meshgrid(humidite,un)
+r=Foret(10,10).r(un,humidite,0.1)
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_surface(humidite, un, r,cmap=cm.plasma)
+ax.set_zlabel('r = cii/ci')
+ax.set_xlabel('humidité')
+ax.set_ylabel('vitesse du vent')
+plt.show()

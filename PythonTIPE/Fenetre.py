@@ -98,7 +98,7 @@ class Fenetre(tk.Tk):
             self.bouText.set("Reprendre")
         if self.playing:
             #après avoir repris on enregistre les éventuelles modifications de l'angle du vent.
-            self.foret.mesher_vitesse(self.scala_vitesse,np.pi/180 * self.scala2.get(),self.scala_humid/100)
+            self.foret.mesher_vitesse(self.scala_vitesse.get(),np.pi/180 * self.scala2.get(),self.scala_humid.get()/100)
 
     def suivant(self):
         """Fonction appelée régulièrement pour faire avancer la simulation."""
