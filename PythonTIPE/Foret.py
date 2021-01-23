@@ -45,7 +45,7 @@ class Foret(object):
         """Evolution du feu: calcul des probabilités et tirage."""
 
         #tous ces calculs sont fait via numpy sans boucle for.
-        #numpy lance les calculs directement en C ce qui permet
+        #numpy lance les calculs directement en C ce qui permet une exécution plus rapide.
 
         #voisinages
         #on copie la grille pour s'assurer que les calculs soient effectués avant les modifications.
