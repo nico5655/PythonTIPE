@@ -8,7 +8,6 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class Foret(object):
     """La simulation de la forêt qui sera affichée."""
-
     def __init__(self,nC,nL):
         #taille de la forêt.
         self.nC = nC
@@ -93,13 +92,13 @@ class Foret(object):
         self.grille[1:(self.nL-1),1:(self.nC-1)]=grille2.copy()
 
 ### modèle physique
-
     def calculer_modele(self,un,alpha,humidite):
         """Calcul des tableaux de vitesses et de la distortion temporelle en fonction des nouvelles valeurs des paramètres."""
         #calcul de la matrice de vitesse
         mat_direction=self.calculerMatriceDirectionVent(alpha)
         #à chaque point on associe sa matrice de vitesse 3x3
-        vit=np.maximum(self.r(un,humidite)*mat_direction,np.ones((3,3)))
+        vit=np.maximum(self.r(un,humidite)*mat_direction, np.ones((3,3)))
+        print(vit)
         arr=np.ones((self.nL,self.nC,3,3))
         for i in range(self.nL):
             for j in range(self.nC):
@@ -127,7 +126,6 @@ class Foret(object):
                 #modification de la case correspondante dans la matrice du vent.
                 #par exemple (1,1)+(1,1)=(2,2) pour 45°.
                 vitesse_vent[1 + Foret.sgn(np.cos(beta)),1 + Foret.sgn(np.sin(beta))] = value
-        print(np.flip(vitesse_vent.T,0))
         #on utilise flip car l'axe des y de la grille est inversé.
         return np.flip(vitesse_vent,0)
 
