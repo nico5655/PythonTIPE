@@ -18,6 +18,8 @@ class Foret(object):
         self.pNonArbre = 0.25
         #coefficient d'extinction
         self.coeffExtinction = 0.05
+        #point d'eau
+        self.caseEau=None#(int(3*nL/4),int(1*nC/4))
         #probabilité d'extinction des cases à l'intérieur du périmètre du feu
         #(pas de végétal adjacent).
         self.coeffExtinction_interieur = 0.2
@@ -40,6 +42,9 @@ class Foret(object):
                     etat[i,j] = 2
         # choix du départ du feu.
         etat[self.nL // 2,self.nC // 2] = 1
+        if not self.caseEau is None:
+            etat[self.caseEau[0],self.caseEau[1]]=4
+
         return etat
 
     def evolutionFeu(self):
@@ -55,7 +60,7 @@ class Foret(object):
         grille1 = self.grille.copy()
         #les strides sont habituellement utilisées pour du traitement d'image
         #par exemple pour flouter une image en remplaçant un point par la
-        #moyenne de ses voisins.
+        #moyenne de ses voisins.zzd
         #Le principe est d'augmenter le nombre de dimensions ici en passant de
         #deux à 4 dimensions.
         #on transforme un tableau de nombres en un tableau de matrices 3x3
@@ -77,7 +82,7 @@ class Foret(object):
         allumage = (patches == 1) * self.mesh_v[1:(self.nL - 1),1:(self.nC - 1)]
         #on somme ensuite les matrices de vitesse avant de les diviser par le
         #total pour obtenir les probabilités.
-        allumage = allumage.sum(axis=(-1, -2)) / (self.mesh_v[1:(self.nL - 1),1:(self.nC - 1)]).sum(axis=(-1, -2))
+        allumage = (allumage.sum(axis=(-1, -2)) / (self.mesh_v[1:(self.nL - 1),1:(self.nC - 1)]).sum(axis=(-1, -2)))*(self.mesh_h[1:(self.nL - 1),1:(self.nC - 1)])
         #on tire un tableau de nombre aléatoires (un nombre par case)
         rdms = np.random.rand(self.nL - 2,self.nC - 2)#tirage
         grille2 = self.grille[1:(self.nL - 1),1:(self.nC - 1)]
@@ -106,21 +111,34 @@ class Foret(object):
         #update
         self.grille[1:(self.nL - 1),1:(self.nC - 1)] = grille2.copy()
 
+    def champ_humidite(self,x,y):
+        if self.caseEau is None:
+            return 0
+        d=((x-self.caseEau[0])**2+(y-self.caseEau[1])**2)**(1/2)
+        if d<=2:
+            return 4
+        if d<=5:
+            return 2 #valeur arbitraire/esthétique.
+        return 0
+
 ### modèle physique
     def calculer_modele(self,un,alpha,humidite):
         """Calcul des tableaux de vitesses et de la distortion temporelle en fonction des nouvelles valeurs des paramètres."""
         #calcul de la matrice de vitesse
         mat_direction = self.calculerMatriceDirectionVent(alpha)
-        #à chaque point on associe sa matrice de vitesse 3x3
         vit = self.r(un,humidite) * mat_direction + np.ones((3,3))
+        #à chaque point on associe sa matrice de vitesse 3x3
         print(vit)
         arr = np.ones((self.nL,self.nC,3,3))
+        arr_h=np.ones((self.nL,self.nC))
         for i in range(self.nL):
             for j in range(self.nC):
-                #pour l'instant, pas de densité de végétation donc la vitesse
-                #est pareille partout.
+                vit = (self.r(un,humidite+self.champ_humidite(i,j)) * mat_direction) + np.ones((3,3))
                 arr[i,j] = vit
+                #étang
+                arr_h[i,j]=(1+self.a*humidite)/(1+self.a*(self.champ_humidite(i,j)+humidite))
         self.mesh_v = arr
+        self.mesh_h= arr_h
         #selon les rapports de vitesse, le temps est accéléré ou décéléré
         self.distortion_temps = ((1 + self.a * humidite) / (1 + self.a * self.humidite_defaut)) * (self.r(self.v_vent_defaut,self.humidite_defaut) / (self.r(un,humidite)))
 
@@ -143,9 +161,7 @@ class Foret(object):
             ##pas top pour l'instant affiner quand les vrais calculs de r
             ##seront possibles.
             if value > 1e-10:
-                #modification de la case correspondante dans la matrice du
-                #vent.
-                #par exemple (1,1)+(1,1)=(2,2) pour 45°.
+                #modification de la case correspondante dans la matrice du vent.
                 vitesse_vent[1 + Foret.sgn(np.cos(beta)),1 + Foret.sgn(np.sin(beta))] = value
         #on utilise flip car l'axe des y de la grille est inversé.
         return np.flip(vitesse_vent,0)
