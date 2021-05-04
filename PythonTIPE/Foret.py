@@ -60,7 +60,7 @@ class Foret(object):
         grille1 = self.grille.copy()
         #les strides sont habituellement utilisées pour du traitement d'image
         #par exemple pour flouter une image en remplaçant un point par la
-        #moyenne de ses voisins.zzd
+        #moyenne de ses voisins.
         #Le principe est d'augmenter le nombre de dimensions ici en passant de
         #deux à 4 dimensions.
         #on transforme un tableau de nombres en un tableau de matrices 3x3
