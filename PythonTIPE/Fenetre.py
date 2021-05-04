@@ -18,7 +18,7 @@ class Fenetre(tk.Tk):
         #temps écoulé dans la simulation (minutes) elle est en chiffre contrairement à timeElapsed qui est le texte affiché.
         self.tElapsed = 0
         #Code couleur pour faire correspondre la simulation à l'affichage.
-        self.colorCode = {0:'forest green',1:'red',2:'ivory',3:'gray29'}
+        self.colorCode = {0:'forest green',1:'red',2:'ivory',3:'gray29',4:'blue'}
         #initialisation
         self.creerWidgets()
         self.playing = False
