@@ -151,15 +151,9 @@ class Foret(object):
             beta = i * np.pi / 4
             #voir diapo pour les justification des calculs
             value = np.cos(beta - alpha)
-            #10^(-10) au lieu de 0 pour les erreurs de calcul de flottant sur
-            #les sin et cos.
-            #seules les valeurs strictements positives doivent être prises en
-            #compte.
-            #dans le cas contraire, on est contre le vent et la propagation
-            #sera prise comme sans vent.
-            #TODO: revoir pour comment utiliser la matrice des 1
-            ##pas top pour l'instant affiner quand les vrais calculs de r
-            ##seront possibles.
+            #10^(-10) au lieu de 0 pour les erreurs de calcul de flottant sur les sin et cos.
+            #seules les valeurs strictements positives doivent être prises en compte.
+            #dans le cas contraire, on est contre le vent et la propagation sera prise comme sans vent.
             if value > 1e-10:
                 #modification de la case correspondante dans la matrice du vent.
                 vitesse_vent[1 + Foret.sgn(np.cos(beta)),1 + Foret.sgn(np.sin(beta))] = value
