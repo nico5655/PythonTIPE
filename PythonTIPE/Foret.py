@@ -3,8 +3,7 @@ import random
 import time
 from numpy.lib import stride_tricks
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
+
 
 class Foret(object):
     """La simulation de la forêt qui sera affichée."""
@@ -20,8 +19,7 @@ class Foret(object):
         self.coeffExtinction = 0.05
         #point d'eau
         self.caseEau=None#(int(3*nL/4),int(1*nC/4))
-        #probabilité d'extinction des cases à l'intérieur du périmètre du feu
-        #(pas de végétal adjacent).
+        #probabilité d'extinction des cases à l'intérieur du périmètre du feu (pas de végétal adjacent).
         self.coeffExtinction_interieur = 0.2
         #valeurs par défaut des paramètres.
         self.distortion_temps = 1
@@ -35,15 +33,20 @@ class Foret(object):
         """Initialisation de la forêt."""
         # creation de la grille.
         etat = np.zeros((self.nL,self.nC))
+        np.random.seed(10014)
         #initialisation de la grille.
         for i in range(self.nL):
             for j in range(self.nC):
-                if (random.random() < self.pNonArbre) or (i == (self.nL - 1)) or (i == 0) or j == (self.nC - 1) or (j == 0):
+                if (np.random.random() < self.pNonArbre) or (i == (self.nL - 1)) or (i == 0) or j == (self.nC - 1) or (j == 0):
                     etat[i,j] = 2
         # choix du départ du feu.
         etat[self.nL // 2,self.nC // 2] = 1
         if not self.caseEau is None:
             etat[self.caseEau[0],self.caseEau[1]]=4
+            etat[self.caseEau[0]+1,self.caseEau[1]]=4
+            etat[self.caseEau[0],self.caseEau[1]+1]=4
+            etat[self.caseEau[0]-1,self.caseEau[1]]=4
+            etat[self.caseEau[0],self.caseEau[1]-1]=4
 
         return etat
 
@@ -51,60 +54,44 @@ class Foret(object):
         """Evolution du feu: calcul des probabilités et tirage."""
 
         #tous ces calculs sont fait via numpy sans boucle for.
-        #numpy lance les calculs directement en C ce qui permet une exécution
-        #plus rapide.
+        #numpy lance les calculs directement en C ce qui permet une exécution plus rapide.
 
-        #voisinages
-        #on copie la grille pour s'assurer que les calculs soient effectués
-        #avant les modifications.
+        ## Voisinages
+        #On copie la grille pour s'assurer que les calculs soient effectués avant les modifications.
         grille1 = self.grille.copy()
         #les strides sont habituellement utilisées pour du traitement d'image
-        #par exemple pour flouter une image en remplaçant un point par la
-        #moyenne de ses voisins.
-        #Le principe est d'augmenter le nombre de dimensions ici en passant de
-        #deux à 4 dimensions.
-        #on transforme un tableau de nombres en un tableau de matrices 3x3
-        #la matrice 3x3 qui remplacent le nombre contient le nombre lui-même et
-        #ses 8 voisins.
-        #les strides manipulent directement la représentation binaire du
-        #tableau dans la mémoire.
-        #bien que risquée et à manipuler avec extrême précaution, cette méthode
-        #offre un GIGANTESQUE gain de performance.
-        #plus d'info ici:
-        #https://realpython.com/numpy-array-programming/#image-feature-extraction
+        #par exemple pour flouter une image en remplaçant un point par la moyenne de ses voisins.
+        #Le principe est d'augmenter le nombre de dimensions ici en passant de deux à 4 dimensions.
+        #On transforme un tableau de nombres en un tableau de matrices 3x3.
+        #La matrice 3x3 qui remplace le nombre contient le nombre lui-même et ses 8 voisins.
+        #Les strides manipulent directement la représentation binaire du tableau dans la mémoire.
+        #Bien que risquée et à manipuler avec extrême précaution, cette méthode offre un GIGANTESQUE gain de performance.
+        #plus d'info ici: https://realpython.com/numpy-array-programming/#image-feature-extraction
         shape = (grille1.shape[0] - 2, grille1.shape[1] - 2, 3, 3)
         patches = stride_tricks.as_strided(grille1, shape=shape, strides=(2 * grille1.strides))
 
-        #allumage
-        #on coupe les bords car les cases sans voisins n'ont pas été stridées.
-        #la multiplication termes à termes annulera les coefficients de
-        #vitesses pour les cases éteintes.
+        ## Allumage
+        #On coupe les bords car les cases sans voisins n'ont pas été stridées.
+        #La multiplication termes à termes annulera les coefficients de vitesses pour les cases éteintes.
         allumage = (patches == 1) * self.mesh_v[1:(self.nL - 1),1:(self.nC - 1)]
-        #on somme ensuite les matrices de vitesse avant de les diviser par le
-        #total pour obtenir les probabilités.
+        #On somme ensuite les matrices de vitesse avant de les diviser par le total pour obtenir les probabilités.
         allumage = (allumage.sum(axis=(-1, -2)) / (self.mesh_v[1:(self.nL - 1),1:(self.nC - 1)]).sum(axis=(-1, -2)))*(self.mesh_h[1:(self.nL - 1),1:(self.nC - 1)])
-        #on tire un tableau de nombre aléatoires (un nombre par case)
+        #On tire un tableau de nombre aléatoires (un nombre par case).
         rdms = np.random.rand(self.nL - 2,self.nC - 2)#tirage
         grille2 = self.grille[1:(self.nL - 1),1:(self.nC - 1)]
-        #on compare ces nombres avec les probabilités d'allumage et on allume
-        #si le nombre est en-dessous de la probabilité.
+        #On compare ces nombres avec les probabilités d'allumage et on allume si le nombre est en-dessous de la probabilité.
         grille2[(rdms < allumage) & (grille2 == 0)] = 1
 
-        #extinction
-        #cases n'ayant pas de végétation adjacentes sont considérées comme
-        #ayant plus de chances de s'éteindre.
-        #le front de flamme étant déjà passé aux autres cases, le peu de feu
-        #qui reste s'éteint plus facilement.
-        #On considère ces cases comme "finies".
+        ## Extinction
+        #Cases n'ayant pas de végétation adjacentes sont considérées comme ayant plus de chances de s'éteindre.
         extinction = (patches == 0)#cases de végétal
         extinction[extinction == True] = 1
         extinction = extinction.sum(axis=(-1, -2))
-        #le tableau contient maintenant le nombre de cases de végétal
-        #adjacentes pour chaque case.
+        #Le tableau contient maintenant le nombre de cases de végétal adjacentes pour chaque case.
         rdms = np.random.rand(self.nL - 2,self.nC - 2)#tirage
         pcs_interieur = 1 - np.exp(-self.coeffExtinction_interieur * self.distortion_temps)
         grille2[(extinction == 0) & (grille2 == 1) & (rdms < pcs_interieur)] = 3
-        #la probabilité d'extinction étant adjacente à des cases de végétal.
+        #La probabilité d'extinction étant adjacente à des cases de végétal.
         pcons_perimetre = 1 - np.exp(-self.coeffExtinction * self.distortion_temps)
         grille2[(extinction != 0) & (rdms < pcons_perimetre) & (grille2 == 1)] = 3
 
@@ -127,8 +114,9 @@ class Foret(object):
         #calcul de la matrice de vitesse
         mat_direction = self.calculerMatriceDirectionVent(alpha)
         vit = self.r(un,humidite) * mat_direction + np.ones((3,3))
-        #à chaque point on associe sa matrice de vitesse 3x3
         print(vit)
+
+        #à chaque point on associe sa matrice de vitesse 3x3
         arr = np.ones((self.nL,self.nC,3,3))
         arr_h=np.ones((self.nL,self.nC))
         for i in range(self.nL):

@@ -35,8 +35,7 @@ class Fenetre(tk.Tk):
         #le bouton pour allumer le feu
         fra = tk.Frame(self)
         self.bouText = tk.StringVar()
-        #le texte du bouton est dynamique, il change selon si l'on est au
-        #début, en pause ou en cours de propagation.
+        #le texte du bouton est dynamique, il change selon si l'on est au début, en pause ou en cours de propagation.
         self.bouText.set("Commencer")
         self.bou1 = tk.Button(fra,textvariable=self.bouText, width=15, command=self.play)
         self.bou1.pack(side='left')
@@ -73,11 +72,11 @@ class Fenetre(tk.Tk):
                 recta,coulor = self.rectGrid[x][y]
                 #la modification de la grille d'affichage n'a lieu que quand nécessaire afin d'améliorer les performances.
                 if coul != coulor:
-                    #modification de la couleur du rectangle affiché sur l'écran.
+                    #Modification de la couleur du rectangle affiché sur l'écran.
                     self.canvas.itemconfig(recta, fill=coul)
-                    #modification du rectangle et de la couleur stockés dans la grille d'affichage.
+                    #Modification du rectangle et de la couleur stockés dans la grille d'affichage.
                     self.rectGrid[x][y] = (recta,coul)
-        #l'affichage est directement mis à jour (les couleurs changent sur l'écran).
+        #L'affichage est directement mis à jour (les couleurs changent sur l'écran).
         self.canvas.update()
 
     def creerGrille(self):
@@ -86,7 +85,7 @@ class Fenetre(tk.Tk):
             for y in range(self.foret.nC):
                 coul = self.colorCode[self.foret.grille[x,y]]
                 recta = self.canvas.create_rectangle((x * self.a, y * self.a, (x + 1) * self.a, (y + 1) * self.a), outline="gray", fill=coul)
-                #les rectangles sont affichés puis stockés avec leur couleur dans la grille d'affichage.
+                #Les rectangles sont affichés puis stockés avec leur couleur dans la grille d'affichage.
                 self.rectGrid[x][y] = (recta,coul)
 
     def play(self):
@@ -125,10 +124,10 @@ class Fenetre(tk.Tk):
             self.timeElapsed.set("temps écoulé: " + str(hours) + "h " + minutes + " min")
             #affichage des modifications de la forêt sur la grille.
             if not self.skip:
-                #le skip est utilisé dans le cas où la modification de l'affichage prend plus de 250ms.
-                #éviter que l'itération suivante modifie l'affichage tant que cette itération n'a pas fini.
-                #les problèmes de performance ne ralentiront donc pas le feu.
-                #en revanche, en cas de problème de performance, l'affichage sera mis à jour à des intervalles plus espacés.
+                #Le skip est utilisé dans le cas où la modification de l'affichage prend plus de 250ms.
+                #Eviter que l'itération suivante modifie l'affichage tant que cette itération n'a pas fini.
+                #Les problèmes de performance ne ralentiront donc pas le feu.
+                #En revanche, en cas de problème de performance, l'affichage sera mis à jour à des intervalles plus espacés.
                 self.skip = True
                 self.modifierGrille()
                 self.skip = False
